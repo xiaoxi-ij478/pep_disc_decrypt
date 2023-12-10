@@ -138,14 +138,14 @@ def main(argc, argv):
             exec_function = EncryptManager().decrypt
 
         elif option in ("-o", "--output"):
-            output_file = open(argument, "wb")
+            output_file = sys.stdout.buffer if argument == '-' else open(argument, "wb")
 
         elif option in ("-h", "--help"):
             print_help(argv[0])
             return 0
 
     if command_line[1]:
-        input_file = open(command_line[1][0], "rb")
+        input_file = sys.stdin.buffer if command_line[1] == '-' else open(command_line[1][0], "rb")
 
     output_file.write(exec_function(input_file.read()))
     return 0
