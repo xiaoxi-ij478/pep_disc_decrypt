@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import getopt
+import os
 import sys
 import zlib
 from abc import ABCMeta, abstractmethod
@@ -89,6 +90,9 @@ class DT03DataDecrypter(DataDecryptor):
     def encrypt(self, bytestream: ByteString) -> bytes:
         return self._internal(bytestream, len(bytestream))
 
+class UnmatchMagicNumberError(ValueError):
+    pass
+
 class EncryptManager:
     encryptors: dict[int, DataDecryptor] = {
         1: DT01DataDecrypter,
@@ -106,7 +110,7 @@ class EncryptManager:
 
     def decrypt(self, bytestream: ByteString) -> bytes:
         if bytestream[0:3] != b"\x3F\x3F\x00":
-            raise ValueError("Unmatch magic number")
+            raise UnmatchMagicNumberError("Unmatch magic number")
 
         decryptor = self.encryptors[bytestream[3]]
 
@@ -119,20 +123,21 @@ def print_help(prog_name):
     print("File may be '-' to read from stdin / write to stdout")
     print("Default is decrypt stdin to stdout")
     print()
-    print("  -e, --encrypt            Encrypt files")
-    print("  -d, --decrypt            Decrypt files (default)")
-    print("  -o, --output <FILENAME>  Write output to file (default stdout)")
-    print("  -h, --help       Display this help")
+    print("  -e, --encrypt <ALGORITHM>    Encrypt file (1 for algo 1, 3 for algo 3)")
+    print("  -d, --decrypt                Decrypt file (default)")
+    print("  -o, --output <FILENAME>      Write output to file (default stdout)")
+    print("  -h, --help                   Display this help")
 
 def main(argc, argv):
-    command_line = getopt.gnu_getopt(argv[1:], "edho:", ["encrypt", "decrypt", "help", "output="])
+    command_line = getopt.gnu_getopt(argv[1:], "e:dho:", ["encrypt=", "decrypt", "help", "output="])
     input_file = sys.stdin.buffer
     output_file = sys.stdout.buffer
     exec_function = EncryptManager().decrypt
 
     for option, argument in command_line[0]:
         if option in ("-e", "--encrypt"):
-            exec_function = EncryptManager().encrypt
+            encrypt_algorithm = argument
+            exec_function = lambda b: EncryptManager().encrypt(int(encrypt_algorithm), b)
 
         elif option in ("-d", "--decrypt"):
             exec_function = EncryptManager().decrypt
@@ -147,7 +152,15 @@ def main(argc, argv):
     if command_line[1]:
         input_file = sys.stdin.buffer if command_line[1] == '-' else open(command_line[1][0], "rb")
 
-    output_file.write(exec_function(input_file.read()))
+    try:
+        output_file.write(exec_function(input_file.read()))
+    except UnmatchMagicNumberError:
+        print("File is not encrypted", file=sys.stderr)
+        if output_file is not sys.stdout.buffer:
+            os.remove(output_file.name)
+
+        return 1
+
     return 0
 
 if __name__ == "__main__":
