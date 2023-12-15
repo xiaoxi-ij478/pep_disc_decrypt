@@ -112,21 +112,23 @@ class EncryptManager:
         if bytestream[0:3] != b"\x3F\x3F\x00":
             raise UnmatchMagicNumberError("Unmatch magic number")
 
+        print("Using encryption algorithm", bytestream[3], file=sys.stderr)
+
         decryptor = self.encryptors[bytestream[3]]
 
         return decryptor().decrypt(bytestream[4:])
 
 def print_help(prog_name):
-    print(f"Usage: {prog_name} [OPTIONS]... [FILENAME]")
-    print("Encrypt/Decrypt")
-    print()
-    print("File may be '-' to read from stdin / write to stdout")
-    print("Default is decrypt stdin to stdout")
-    print()
-    print("  -e, --encrypt <ALGORITHM>    Encrypt file (1 for algo 1, 3 for algo 3)")
-    print("  -d, --decrypt                Decrypt file (default)")
-    print("  -o, --output <FILENAME>      Write output to file (default stdout)")
-    print("  -h, --help                   Display this help")
+    print(f"Usage: {prog_name} [OPTIONS]... [FILENAME]", file=sys.stderr)
+    print("Encrypt/Decrypt", file=sys.stderr)
+    print(file=sys.stderr)
+    print("File may be '-' to read from stdin / write to stdout", file=sys.stderr)
+    print("Default is decrypt stdin to stdout", file=sys.stderr)
+    print(file=sys.stderr)
+    print("  -e, --encrypt <ALGORITHM>    Encrypt file (1 for algo 1, 3 for algo 3)", file=sys.stderr)
+    print("  -d, --decrypt                Decrypt file (default)", file=sys.stderr)
+    print("  -o, --output <FILENAME>      Write output to file (default stdout)", file=sys.stderr)
+    print("  -h, --help                   Display this help", file=sys.stderr)
 
 def main(argc, argv):
     command_line = getopt.gnu_getopt(argv[1:], "e:dho:", ["encrypt=", "decrypt", "help", "output="])
