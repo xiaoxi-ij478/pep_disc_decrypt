@@ -2,6 +2,7 @@
 
 import getopt
 import os
+import pathlib
 import sys
 import zlib
 from abc import ABCMeta, abstractmethod
@@ -125,16 +126,27 @@ def print_help(prog_name):
     print("File may be '-' to read from stdin / write to stdout", file=sys.stderr)
     print("Default is decrypt stdin to stdout", file=sys.stderr)
     print(file=sys.stderr)
-    print("  -e, --encrypt <ALGORITHM>    Encrypt file (1 for algo 1, 3 for algo 3)", file=sys.stderr)
-    print("  -d, --decrypt                Decrypt file (default)", file=sys.stderr)
-    print("  -o, --output <FILENAME>      Write output to file (default stdout)", file=sys.stderr)
-    print("  -h, --help                   Display this help", file=sys.stderr)
+    print("  -e, --encrypt <ALGORITHM>  Encrypt file (1 for algo 1, 3 for algo 3)", file=sys.stderr)
+    print("  -d, --decrypt              Decrypt file (default)", file=sys.stderr)
+    print("  -o, --output <FILENAME>    Write output to <FILENAME> (default stdout)", file=sys.stderr)
+    print("                             (throw an error if <FILENAME> exists", file=sys.stderr)
+    print("                              and `-r' is not specified)", file=sys.stderr)
+    print("  -f, --dir <DIRECTORY>      Put the output file at <DIRECTORY>", file=sys.stderr)
+    print("                             (cannot use with `-r')", file=sys.stderr)
+    print("  -r, --replace              Without `-o', replace the input file", file=sys.stderr)
+    print("                             With `-o', replace the specified output file", file=sys.stderr)
+    print("  -h, --help                 Display this help", file=sys.stderr)
 
 def main(argc, argv):
-    command_line = getopt.gnu_getopt(argv[1:], "e:dho:", ["encrypt=", "decrypt", "help", "output="])
+    command_line = getopt.gnu_getopt(
+        argv[1:], "e:do:rf:h",
+        ["encrypt=", "decrypt", "output=", "replace", "dir=", "help"]
+    )
     input_file = sys.stdin.buffer
-    output_file = sys.stdout.buffer
+    output_file = '-'
     exec_function = EncryptManager().decrypt
+    replace = False
+    output_dir = pathlib.Path()
 
     for option, argument in command_line[0]:
         if option in ("-e", "--encrypt"):
@@ -145,7 +157,13 @@ def main(argc, argv):
             exec_function = EncryptManager().decrypt
 
         elif option in ("-o", "--output"):
-            output_file = sys.stdout.buffer if argument == '-' else open(argument, "wb")
+            output_file = argument
+
+        elif option in ("-r", "--replace"):
+            replace = True
+
+        elif option in ("-f", "--dir"):
+            output_dir = pathlib.Path(argument)
 
         elif option in ("-h", "--help"):
             print_help(argv[0])
@@ -153,15 +171,22 @@ def main(argc, argv):
 
     if command_line[1]:
         input_file = sys.stdin.buffer if command_line[1] == '-' else open(command_line[1][0], "rb")
+        if output_file == '-' and replace:
+            output_file = command_line[1][0]
+
+    data = input_file.read()
 
     try:
-        output_file.write(exec_function(input_file.read()))
+        processed_data = exec_function(data)
     except UnmatchMagicNumberError:
         print("File is not encrypted", file=sys.stderr)
-        if output_file is not sys.stdout.buffer:
-            os.remove(output_file.name)
-
         return 1
+
+    if output_file == '-':
+        sys.stdout.buffer.write(processed_data)
+    else:
+        with open(output_dir / output_file, "wb" if replace else "xb") as output_file_obj:
+            output_file_obj.write(processed_data)
 
     return 0
 
