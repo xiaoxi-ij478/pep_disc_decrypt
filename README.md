@@ -63,12 +63,12 @@ P.S. 实际上有三个算法, 但是 Flash 里只写了 1 和 3 两种.
 实例方法:
 
 - `encrypt(enctype, bytestream)`
-  - - 加密 `bytestream`, 返回加密的内容
-  - - enctype: 加密算法 ID
-  - - bytestream: 要加密的字节
+  - 加密 `bytestream`, 返回加密的内容
+  - enctype: 加密算法 ID
+  - bytestream: 要加密的字节
 - `decrypt(bytestream)`
-  - - 解密 `bytestream`, 返回解密的内容
-  - - bytestream: 要解密的字节
+  - 解密 `bytestream`, 返回解密的内容
+  - bytestream: 要解密的字节
 
 示例:
 ```python
