@@ -15,7 +15,7 @@ def print_help(prog_name):
     print(file=sys.stderr)
     print("  -o, --output <输出文件>   写入输出到 <输出文件> (默认为标准输出)", file=sys.stderr)
     print("                            (如果 <输出文件> 存在且 `-r' 没有指定, 则抛出错误)", file=sys.stderr)
-    # -d, -r 都被用了 :O
+    # 跟着文件解密脚本走了 (虽然我可以改成 -d)
     print("  -f, --dir <目录>          将输出文件放置在 <目录> 下", file=sys.stderr)
     print("                            (不可与 `-r' 同时使用)", file=sys.stderr)
     print("  -r, --replace             如果没有 `-o', 则替换输入文件 (除非是标准输入)", file=sys.stderr)
