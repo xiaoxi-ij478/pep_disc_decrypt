@@ -98,6 +98,7 @@ class UnmatchMagicNumberError(ValueError):
     pass
 
 
+_in_script = False
 class EncryptManager:
     encryptors: dict[int, DataDecryptor] = {
         1: DT01DataDecrypter,
@@ -105,7 +106,8 @@ class EncryptManager:
     }
 
     def encrypt(self, enctype: int, bytestream: ByteString) -> bytes:
-        print("使用加密算法", enctype, file=sys.stderr)
+        if _in_script:
+            print("使用加密算法", enctype, file=sys.stderr)
 
         encryptor = self.encryptors[enctype]
 
@@ -119,7 +121,8 @@ class EncryptManager:
         if bytestream[0:3] != b"\x3F\x3F\x00":
             raise UnmatchMagicNumberError("Unmatch magic number")
 
-        print("使用加密算法", bytestream[3], file=sys.stderr)
+        if _in_script:
+            print("使用加密算法", bytestream[3], file=sys.stderr)
 
         decryptor = self.encryptors[bytestream[3]]
 
@@ -224,4 +227,6 @@ def main(argc, argv):
     return 0
 
 if __name__ == "__main__":
+    # 显示 "使用加密算法 1/3"
+    _in_script = True
     sys.exit(main(len(sys.argv), sys.argv))
